@@ -1,0 +1,247 @@
+<template>
+  <scroll class="page">
+    <div class="top-space"></div>
+    <text class="date">{{date}}</text>
+    <div class="bar">
+      <div class="arrow" on:click="shiftDay(1)"><image class="arrow-icon" src="/assets/arrow-left.png"/></div>
+      <div class="city" on:click="openCities">
+        <text class="city-name">{{city}}</text>
+      </div>
+      <div class="arrow" on:click="shiftDay(-1)"><image class="arrow-icon" src="/assets/arrow-right.png"/></div>
+    </div>
+    <div if="{{note}}" class="note-slot">
+      <div class="note" on:click="backToToday">
+        <text class="dayNote">{{note}}</text>
+      </div>
+    </div>
+    <div for="row in rows" class="slot">
+      <div if="{{row.next}}" class="row next">
+        <text class="time time-next">{{row.time}}</text>
+        <text class="name name-next">{{row.name}}</text>
+      </div>
+      <div if="{{!row.next}}" class="row">
+        <text class="time">{{row.time}}</text>
+        <text class="name">{{row.name}}</text>
+      </div>
+    </div>
+    <text class="source">עתים לבינה</text>
+    <div class="bottom-space"></div>
+  </scroll>
+</template>
+
+<style>
+  .top-space {
+    width: 10px;
+    height: 58px;
+  }
+
+  .bottom-space {
+    width: 10px;
+    height: 70px;
+  }
+
+  .page {
+    width: 466px;
+    height: 466px;
+    background-color: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .date {
+    width: 372px;
+    font-size: 27px;
+    color: #ffd65a;
+    text-align: center;
+  }
+
+  .bar {
+    width: 372px;
+    height: 64px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .arrow {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    background-color: #2a1f5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .arrow-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .city {
+    width: 228px;
+    height: 56px;
+    border-radius: 28px;
+    background-color: #2a1f5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .note-slot {
+    width: 228px;
+    height: 50px;
+  }
+
+  .note {
+    width: 228px;
+    height: 44px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .city-name {
+    font-size: 28px;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .dayNote {
+    font-size: 24px;
+    color: #78f0d2;
+  }
+
+  .slot {
+    width: 372px;
+    height: 60px;
+  }
+
+  .row {
+    width: 372px;
+    height: 60px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    border-radius: 16px;
+  }
+
+  .next {
+    background-color: #ffd65a;
+  }
+
+  .time {
+    font-size: 30px;
+    color: #ffffff;
+  }
+
+  .name {
+    font-size: 27px;
+    color: #d8d8e8;
+    text-align: right;
+  }
+
+  .time-next {
+    color: #2a1f5c;
+  }
+
+  .name-next {
+    color: #2a1f5c;
+  }
+
+  .source {
+    margin-top: 14px;
+    font-size: 22px;
+    color: #8a8aa0;
+  }
+</style>
+
+<script>
+  import router from '@system.router'
+  import { zmanimFor, localMinutes, clock, ROWS } from '../lib/zmanim.js'
+  import { hebrewDate } from '../lib/hebrew-date.js'
+  import { CITIES } from '../lib/cities.js'
+  import { loadCity, locateCity } from '../lib/settings.js'
+
+  const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
+
+  function addDays(day, count) {
+    const t = new Date(Date.UTC(day[0], day[1] - 1, day[2] + count))
+    return [t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate()]
+  }
+
+  export default {
+    data: {
+      date: '',
+      city: '',
+      note: '',
+      rows: []
+    },
+    timer: null,
+    cityIndex: 0,
+    dayOffset: 0,
+    located: false,
+    onShow() {
+      const saved = loadCity()
+      if (saved !== null) {
+        this.cityIndex = saved
+      } else if (!this.located) {
+        this.located = true
+        locateCity(index => {
+          if (loadCity() === null) {
+            this.cityIndex = index
+            this.refresh()
+          }
+        })
+      }
+      this.refresh()
+      if (!this.timer) this.timer = setInterval(() => this.refresh(), 30000)
+    },
+    onHide() {
+      if (this.timer) clearInterval(this.timer)
+      this.timer = null
+    },
+    refresh() {
+      const now = new Date()
+      const nowMinute = now.getHours() * 60 + now.getMinutes()
+      const city = CITIES[this.cityIndex] || CITIES[0]
+      let today = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+      // After Rabbeinu Tam the list moves on to the coming day.
+      const todayTimes = zmanimFor(city, today[0], today[1], today[2])
+      const moved = nowMinute >= 720 && nowMinute > localMinutes(todayTimes.tzeitRT)
+      if (moved) today = addDays(today, 1)
+      const day = addDays(today, this.dayOffset)
+      const times = zmanimFor(city, day[0], day[1], day[2])
+
+      const weekday = new Date(Date.UTC(day[0], day[1] - 1, day[2])).getUTCDay()
+      let marked = this.dayOffset !== 0
+      this.rows = ROWS.filter(item => item[2] === undefined || item[2] === weekday).map(item => {
+        const minute = localMinutes(times[item[0]])
+        const next = !marked && (moved || minute >= nowMinute) && minute >= 180
+        if (next) marked = true
+        return { time: clock(times[item[0]]), name: item[1], next: next }
+      })
+      this.date = 'יום ' + WEEKDAYS[weekday] + ' ' + hebrewDate(day[0], day[1], day[2]).text
+      this.city = city.name
+      this.note = this.dayOffset !== 0 ? 'חזרה להיום' : moved ? 'זמני מחר' : ''
+    },
+    shiftDay(count) {
+      this.dayOffset += count
+      this.refresh()
+    },
+    backToToday() {
+      this.dayOffset = 0
+      this.refresh()
+    },
+    openCities() {
+      router.push({ uri: 'cities' })
+    }
+  }
+</script>

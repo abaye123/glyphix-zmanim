@@ -1,0 +1,16 @@
+{
+  "package": "com.xfaith.calendar",
+  "name": "Zmanim",
+  "icon": "/assets/icon.png",
+  "versionName": "0.1.0",
+  "versionCode": 200,
+  "features": [],
+  "router": {
+    "entry": "main",
+    "pages": {
+      "main": { "component": "index" },
+      "cities": { "component": "index" }
+    }
+  },
+  "config": { "designWidth": 466 }
+}

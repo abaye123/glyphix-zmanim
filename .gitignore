@@ -1,0 +1,7 @@
+# Glyphix build output
+.glyphix-work/
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
