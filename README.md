@@ -59,3 +59,7 @@ gx emulate -d dtg1-emu-466x466 --target=com.xfaith.calendar
 ```
 
 `dtg1-emu-466x466` is `generic-watch-466x466` with a Hebrew font added, in `%APPDATA%\glyphix\devices`. The stock emulator fonts have no Hebrew.
+
+## License
+
+Personal, non-commercial use. Anything you share that is based on this project must be published as open source under the same license. Commercial use requires prior written permission. See [LICENSE](LICENSE).
