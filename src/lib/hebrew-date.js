@@ -50,5 +50,6 @@ export function hebrewDate(y, m, d) {
   let day = fixed - newYear(year)
   let i = 0
   while (day >= months[i][1]) { day -= months[i][1]; i++ }
-  return { day: day + 1, month: months[i][0], year, text: gematria(day + 1) + ' ' + months[i][0] + ' ' + gematria(year % 1000) }
+  const letters = gematria(day + 1), yearText = gematria(year % 1000)
+  return { day: day + 1, month: months[i][0], year, letters, yearText, text: letters + ' ' + months[i][0] + ' ' + yearText }
 }

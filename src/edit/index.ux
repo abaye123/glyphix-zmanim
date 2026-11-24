@@ -1,0 +1,237 @@
+<template>
+  <scroll class="page">
+    <div class="top-space"></div>
+    <text class="title">{{title}}</text>
+    <div class="field" on:click="openText">
+      <text if="{{text}}" class="field-text">{{text}}</text>
+      <text if="{{!text}}" class="hint">הקש לכתיבת תיאור</text>
+    </div>
+    <text class="label">{{dateText}}</text>
+    <div class="steps">
+      <div class="step" on:click="addDay(-7)"><text class="step-text">-7</text></div>
+      <div class="step" on:click="addDay(-1)"><text class="step-text">-1</text></div>
+      <div class="step" on:click="addDay(1)"><text class="step-text">+1</text></div>
+      <div class="step" on:click="addDay(7)"><text class="step-text">+7</text></div>
+    </div>
+    <text class="label">{{hourText}}</text>
+    <div class="steps">
+      <div class="step" on:click="addHour(-1)"><text class="step-text">-1</text></div>
+      <div class="step" on:click="addHour(1)"><text class="step-text">+1</text></div>
+    </div>
+    <text class="label">{{minuteText}}</text>
+    <div class="steps">
+      <div class="step" on:click="addMinute(-10)"><text class="step-text">-10</text></div>
+      <div class="step" on:click="addMinute(-1)"><text class="step-text">-1</text></div>
+      <div class="step" on:click="addMinute(1)"><text class="step-text">+1</text></div>
+      <div class="step" on:click="addMinute(10)"><text class="step-text">+10</text></div>
+    </div>
+    <text class="clock">{{clockText}}</text>
+    <div class="save" on:click="save"><text class="save-text">שמור</text></div>
+    <div if="{{id}}" class="del" on:click="del"><text class="del-text">{{delText}}</text></div>
+    <div class="bottom-space"></div>
+  </scroll>
+</template>
+
+<style>
+  .page {
+    width: 466px;
+    height: 466px;
+    background-color: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .top-space {
+    width: 10px;
+    height: 48px;
+  }
+
+  .bottom-space {
+    width: 10px;
+    height: 90px;
+  }
+
+  .title {
+    font-size: 28px;
+    color: #ffd65a;
+    width: 300px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .field {
+    width: 320px;
+    height: 64px;
+    padding: 0 16px;
+    margin-bottom: 10px;
+    border-radius: 32px;
+    background-color: #1e1e2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .field-text {
+    font-size: 25px;
+    color: #ffffff;
+    width: 280px;
+    text-align: center;
+    max-lines: 1;
+    text-overflow: ellipsis;
+  }
+
+  .hint {
+    font-size: 23px;
+    color: #8080a0;
+    width: 280px;
+    text-align: center;
+  }
+
+  .label {
+    font-size: 24px;
+    color: #d8d8e8;
+    width: 380px;
+    text-align: center;
+  }
+
+  .steps {
+    width: 400px;
+    height: 76px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step {
+    width: 82px;
+    height: 62px;
+    border-radius: 31px;
+    background-color: #2a1f5c;
+    margin: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-text {
+    font-size: 28px;
+    color: #ffffff;
+  }
+
+  .clock {
+    font-size: 46px;
+    color: #ffd65a;
+    width: 200px;
+    text-align: center;
+  }
+
+  .save {
+    width: 240px;
+    height: 64px;
+    border-radius: 32px;
+    background-color: #ffa040;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .save-text {
+    font-size: 28px;
+    color: #141420;
+  }
+
+  .del {
+    width: 240px;
+    height: 56px;
+    border-radius: 28px;
+    background-color: #6a1c1c;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .del-text {
+    font-size: 24px;
+    color: #ffffff;
+  }
+</style>
+
+<script>
+  import router from '@system.router'
+  import { dateTitle, shiftDate } from '../lib/month.js'
+  import { saveReminder, deleteReminder, toast } from '../lib/reminders.js'
+  import { nav, newDraft, draftTime } from '../lib/nav.js'
+
+  const pad = n => (n < 10 ? '0' : '') + n
+
+  export default {
+    data: {
+      id: 0,
+      title: '',
+      text: '',
+      dateText: '',
+      hourText: '',
+      minuteText: '',
+      clockText: '',
+      delText: 'מחק'
+    },
+    sure: false,
+    onShow() {
+      if (!nav.draft) nav.draft = newDraft(null)
+      this.refresh()
+    },
+    refresh() {
+      const d = nav.draft
+      this.id = d.id
+      this.title = d.id ? 'עריכת תזכורת' : 'תזכורת חדשה'
+      this.text = d.text
+      this.dateText = dateTitle(d.day[0], d.day[1], d.day[2]) + ', ' + d.day[2] + '/' + d.day[1]
+      this.hourText = 'שעה: ' + d.hour
+      this.minuteText = 'דקה: ' + d.minute
+      this.clockText = pad(d.hour) + ':' + pad(d.minute)
+    },
+    addDay(n) {
+      nav.draft.day = shiftDate(nav.draft.day, n)
+      this.refresh()
+    },
+    addHour(n) {
+      nav.draft.hour = (nav.draft.hour + n + 24) % 24
+      this.refresh()
+    },
+    addMinute(n) {
+      nav.draft.minute = (nav.draft.minute + n + 60) % 60
+      this.refresh()
+    },
+    openText() {
+      router.push({ uri: 'text' })
+    },
+    save() {
+      const d = nav.draft
+      const at = draftTime(d)
+      if (at <= Date.now()) {
+        toast('השעה כבר עברה')
+        return
+      }
+      const result = saveReminder({ id: d.id, at: at, text: d.text.trim() || 'תזכורת' })
+      if (result === 'full') {
+        toast('יש יותר מדי תזכורות')
+        return
+      }
+      toast(result === 'ok' ? 'התזכורת נשמרה' : result === 'storage' ? 'השמירה נכשלה' : 'נשמרה, אך ההתראה לא נקבעה')
+      if (result !== 'storage') router.back()
+    },
+    del() {
+      if (!this.sure) {
+        this.sure = true
+        this.delText = 'הקש שוב למחיקה'
+        return
+      }
+      deleteReminder(nav.draft.id)
+      router.back()
+    }
+  }
+</script>

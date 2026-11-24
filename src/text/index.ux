@@ -1,0 +1,218 @@
+<template>
+  <scroll class="page">
+    <div class="top-space"></div>
+    <div class="field">
+      <text if="{{query}}" class="query">{{query}}</text>
+      <text if="{{!query}}" class="hint">תיאור התזכורת</text>
+    </div>
+    <div for="r in keyRows" class="key-row">
+      <div for="k in r.keys" class="key" on:click="press(k)">
+        <text class="key-text">{{k}}</text>
+      </div>
+    </div>
+    <div class="key-row">
+      <div class="wide-key" on:click="backspace">
+        <text class="wide-text">{{backText}}</text>
+      </div>
+      <div class="wide-key" on:click="clear">
+        <text class="wide-text">{{clearText}}</text>
+      </div>
+      <div class="wide-key" on:click="press(' ')">
+        <text class="wide-text">{{spaceText}}</text>
+      </div>
+      <div class="wide-key toggle-key" on:click="switchLayout">
+        <text class="wide-text">{{toggleText}}</text>
+      </div>
+    </div>
+    <div class="save" on:click="done">
+      <text class="save-text">אישור</text>
+    </div>
+    <div class="bottom-space"></div>
+  </scroll>
+</template>
+
+<style>
+  .page {
+    width: 466px;
+    height: 466px;
+    background-color: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .top-space {
+    width: 10px;
+    height: 44px;
+  }
+
+  .bottom-space {
+    width: 10px;
+    height: 90px;
+  }
+
+  .title {
+    font-size: 28px;
+    color: #ffd65a;
+    width: 300px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .field {
+    width: 260px;
+    height: 56px;
+    margin-bottom: 8px;
+    border-radius: 28px;
+    background-color: #1e1e2c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+  }
+
+  .query {
+    width: 228px;
+    font-size: 26px;
+    color: #ffffff;
+    text-align: center;
+    max-lines: 1;
+    text-overflow: ellipsis;
+  }
+
+  .hint {
+    width: 228px;
+    font-size: 24px;
+    color: #707088;
+    text-align: center;
+  }
+
+  .key-row {
+    height: 58px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .key {
+    width: 46px;
+    height: 52px;
+    margin: 0 3px;
+    border-radius: 12px;
+    background-color: #26263a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .key-text {
+    font-size: 28px;
+    color: #ffffff;
+  }
+
+  .wide-key {
+    width: 74px;
+    height: 52px;
+    margin: 0 3px;
+    border-radius: 14px;
+    background-color: #33334a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toggle-key {
+    background-color: #3a2410;
+  }
+
+  .wide-text {
+    font-size: 20px;
+    color: #ffffff;
+  }
+
+  .save {
+    width: 240px;
+    height: 62px;
+    margin-top: 12px;
+    border-radius: 31px;
+    background-color: #ffa040;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .save-text {
+    font-size: 26px;
+    color: #141420;
+  }
+</style>
+
+<script>
+  import router from '@system.router'
+  import { nav } from '../lib/nav.js'
+
+  const MAX_LEN = 60
+
+  // Hebrew rows are listed right to left and reversed for the left-to-right flex row.
+  const LAYOUTS = {
+    he: [
+      ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז'],
+      ['ח', 'ט', 'י', 'כ', 'ך', 'ל', 'מ'],
+      ['ם', 'נ', 'ן', 'ס', 'ע', 'פ', 'ף'],
+      ['צ', 'ץ', 'ק', 'ר', 'ש', 'ת']
+    ],
+    en: [
+      ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+      ['h', 'i', 'j', 'k', 'l', 'm', 'n'],
+      ['o', 'p', 'q', 'r', 's', 't', 'u'],
+      ['v', 'w', 'x', 'y', 'z']
+    ],
+    num: [
+      ['1', '2', '3', '4', '5'],
+      ['6', '7', '8', '9', '0'],
+      ['.', ',', ':', '-', '?', '!']
+    ]
+  }
+  const NEXT_LAYOUT = { he: 'en', en: 'num', num: 'he' }
+  const TOGGLE_LABEL = { he: 'ABC', en: '123', num: 'אבג' }
+
+  function rowsFor(name) {
+    return LAYOUTS[name].map(keys => ({ keys: name === 'he' ? keys.slice().reverse() : keys }))
+  }
+
+  export default {
+    data: {
+      query: '',
+      layout: 'he',
+      keyRows: rowsFor('he'),
+      toggleText: TOGGLE_LABEL.he,
+      backText: 'מחק',
+      clearText: 'נקה',
+      spaceText: 'רווח'
+    },
+    onInit() {
+      this.query = nav.draft ? nav.draft.text : ''
+    },
+    press(ch) {
+      if (this.query.length >= MAX_LEN) return
+      if (ch === ' ' && (!this.query || this.query.charAt(this.query.length - 1) === ' ')) return
+      this.query = this.query + ch
+    },
+    backspace() {
+      this.query = this.query.slice(0, -1)
+    },
+    clear() {
+      this.query = ''
+    },
+    switchLayout() {
+      this.layout = NEXT_LAYOUT[this.layout]
+      this.keyRows = rowsFor(this.layout)
+      this.toggleText = TOGGLE_LABEL[this.layout]
+    },
+    done() {
+      if (nav.draft) nav.draft.text = this.query.trim()
+      router.back()
+    }
+  }
+</script>

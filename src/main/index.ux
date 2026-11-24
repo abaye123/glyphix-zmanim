@@ -14,6 +14,15 @@
         <text class="dayNote">{{note}}</text>
       </div>
     </div>
+    <div if="{{missedText}}" class="note-slot">
+      <div class="missed" on:click="openReminders">
+        <text class="missed-text">{{missedText}}</text>
+      </div>
+    </div>
+    <div class="links">
+      <div class="link" on:click="openReminders"><text class="link-text">תזכורות</text></div>
+      <div class="link" on:click="openMonth"><text class="link-text">לוח חודשי</text></div>
+    </div>
     <div for="row in rows" class="slot">
       <div if="{{row.next}}" class="row next">
         <text class="time time-next">{{row.time}}</text>
@@ -30,6 +39,47 @@
 </template>
 
 <style>
+  .links {
+    width: 372px;
+    height: 60px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .link {
+    width: 160px;
+    height: 52px;
+    border-radius: 26px;
+    background-color: #2a1f5c;
+    margin: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .link-text {
+    font-size: 24px;
+    color: #ffffff;
+  }
+
+  .missed {
+    width: 300px;
+    height: 46px;
+    border-radius: 23px;
+    background-color: #a02828;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .missed-text {
+    font-size: 24px;
+    color: #ffffff;
+  }
+
   .top-space {
     width: 10px;
     height: 58px;
@@ -168,6 +218,7 @@
   import { zmanimFor, localMinutes, clock, ROWS } from '../lib/zmanim.js'
   import { hebrewDate } from '../lib/hebrew-date.js'
   import { CITIES } from '../lib/cities.js'
+  import { checkDue, missed } from '../lib/reminders.js'
   import { loadCity, locateCity } from '../lib/settings.js'
 
   const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
@@ -182,6 +233,7 @@
       date: '',
       city: '',
       note: '',
+      missedText: '',
       rows: []
     },
     timer: null,
@@ -209,6 +261,9 @@
       this.timer = null
     },
     refresh() {
+      checkDue()
+      const missedCount = missed().length
+      this.missedText = missedCount ? 'תזכורות שהוחמצו: ' + missedCount : ''
       const now = new Date()
       const nowMinute = now.getHours() * 60 + now.getMinutes()
       const city = CITIES[this.cityIndex] || CITIES[0]
@@ -239,6 +294,12 @@
     backToToday() {
       this.dayOffset = 0
       this.refresh()
+    },
+    openMonth() {
+      router.push({ uri: 'month' })
+    },
+    openReminders() {
+      router.push({ uri: 'reminders' })
     },
     openCities() {
       router.push({ uri: 'cities' })

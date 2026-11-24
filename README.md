@@ -25,10 +25,21 @@ Seconds are dropped when a time is shown, as in the KosherKotlin app.
 
 The picked city is saved. With no saved city the app asks for the location, which the watch only gets through a connected phone, and takes the nearest city; otherwise it uses Jerusalem.
 
+## Calendar and reminders
+
+- `month` - month grid (Hebrew and civil day, today, a dot on days with reminders). A tap opens `day`: the Hebrew date, reminders and zmanim of that day.
+- `reminders` - missed and upcoming reminders. `edit` and `text` set the date, time and description (on-screen Hebrew, English and digits keyboard). Up to 50 reminders, kept in `@system.storage`.
+
+Each reminder has a `@system.schedule` job (type 2, elapsed time) that runs `onReminder` in `app.js`, also when the app is closed. It publishes a notification and vibrates. Jobs can not be listed, so every app start cancels and renews the jobs of pending reminders; this also restores jobs lost in a reboot, once the app is opened. Waits over 20 days run in hops. A reminder is saved as fired before it alerts, so it alerts once. A reminder that was never alerted is shown as missed. The minimum delay of a job is 60 seconds.
+
+Whether the watch keeps jobs across a reboot is not verified.
+
 ## Layout
 
 - `src/lib/zmanim.js` - the compact engine that runs on the watch.
 - `src/lib/hebrew-date.js` - Hebrew date.
+- `src/lib/reminders-core.js` - reminder rules without system calls; `src/lib/reminders.js` binds them to the watch.
+- `src/lib/month.js` - month grid.
 - `src/lib/cities.js` - generated city table.
 - `tools/reference.mjs` - full port of the KosherKotlin calculation, too heavy for the watch.
 - `tools/verify.mjs` - measures the engine against the reference, and the dates against the time zone database and ICU.
@@ -38,6 +49,7 @@ The picked city is saved. With no saved city the app asks for the location, whic
 ```
 node tools/gen-cities.mjs
 node tools/verify.mjs
+node tools/test-reminders.mjs
 ```
 
 ICU reports a 385-day year for 5806. A separate molad calculation gives 384 days, as this app does, so the check lists 385 errors in that year only.

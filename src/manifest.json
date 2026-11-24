@@ -2,14 +2,23 @@
   "package": "com.xfaith.calendar",
   "name": "Zmanim",
   "icon": "/assets/icon.png",
-  "versionName": "0.1.0",
-  "versionCode": 200,
+  "versionName": "0.3.0",
+  "versionCode": 300,
   "features": [],
+  "permissions": [
+    { "name": "watch.permission.SCHEDULE" },
+    { "name": "watch.permission.NOTIFICATION" }
+  ],
   "router": {
     "entry": "main",
     "pages": {
       "main": { "component": "index" },
-      "cities": { "component": "index" }
+      "cities": { "component": "index" },
+      "month": { "component": "index" },
+      "day": { "component": "index" },
+      "edit": { "component": "index" },
+      "text": { "component": "index" },
+      "reminders": { "component": "index" }
     }
   },
   "config": { "designWidth": 466 }

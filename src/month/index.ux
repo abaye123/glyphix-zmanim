@@ -1,0 +1,248 @@
+<template>
+  <scroll class="page">
+    <div class="top-space"></div>
+    <text class="title heb-title">{{hebTitle}}</text>
+    <div class="bar">
+      <div class="arrow" on:click="shift(1)"><image class="arrow-icon" src="/assets/arrow-left.png"/></div>
+      <text class="civil-title">{{civilTitle}}</text>
+      <div class="arrow" on:click="shift(-1)"><image class="arrow-icon" src="/assets/arrow-right.png"/></div>
+    </div>
+    <div class="week">
+      <div for="w in weekdays" class="wd"><text class="wd-text">{{w}}</text></div>
+    </div>
+    <div for="r in rows" class="week-row">
+      <div for="c in r.cells" class="cell-slot">
+        <div if="{{c.kind === 'day'}}" class="cell day" on:click="pick(c.n)">
+          <text class="heb">{{c.heb}}</text>
+          <div class="sub">
+            <div if="{{c.dot}}" class="dot"></div>
+            <text class="civil">{{c.n}}</text>
+          </div>
+        </div>
+        <div if="{{c.kind === 'today'}}" class="cell today" on:click="pick(c.n)">
+          <text class="heb">{{c.heb}}</text>
+          <div class="sub">
+            <div if="{{c.dot}}" class="dot"></div>
+            <text class="civil">{{c.n}}</text>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="wide" on:click="toToday"><text class="wide-text">החודש הנוכחי</text></div>
+    <div class="wide" on:click="openReminders"><text class="wide-text">כל התזכורות</text></div>
+    <div class="bottom-space"></div>
+  </scroll>
+</template>
+
+<style>
+  .page {
+    width: 466px;
+    height: 466px;
+    background-color: #000000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .top-space {
+    width: 10px;
+    height: 26px;
+  }
+
+  .bottom-space {
+    width: 10px;
+    height: 90px;
+  }
+
+  .title {
+    font-size: 28px;
+    color: #ffd65a;
+    width: 300px;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .heb-title {
+    width: 260px;
+    font-size: 25px;
+    margin-bottom: 0px;
+  }
+
+  .bar {
+    width: 340px;
+    height: 48px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .arrow {
+    width: 64px;
+    height: 46px;
+    border-radius: 23px;
+    background-color: #2a1f5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .arrow-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .civil-title {
+    font-size: 24px;
+    color: #ffffff;
+    width: 190px;
+    text-align: center;
+  }
+
+  .week {
+    width: 364px;
+    height: 28px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wd {
+    width: 52px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wd-text {
+    font-size: 18px;
+    color: #9a9ab0;
+  }
+
+  .week-row {
+    width: 364px;
+    height: 54px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cell-slot {
+    width: 52px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cell {
+    width: 48px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .day {
+    background-color: #16161f;
+  }
+
+  .today {
+    background-color: #7a4fd0;
+  }
+
+  .heb {
+    font-size: 21px;
+    color: #ffffff;
+  }
+
+  .sub {
+    width: 48px;
+    height: 18px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .civil {
+    font-size: 14px;
+    color: #b8b8cc;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    margin-right: 4px;
+    border-radius: 4px;
+    background-color: #ffa040;
+  }
+
+  .wide {
+    width: 240px;
+    height: 54px;
+    border-radius: 27px;
+    background-color: #2a1f5c;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wide-text {
+    font-size: 24px;
+    color: #ffffff;
+  }
+</style>
+
+<script>
+  import router from '@system.router'
+  import { MONTHS, monthGrid, hebrewTitle, shiftMonth } from '../lib/month.js'
+  import { ofDay } from '../lib/reminders.js'
+  import { nav } from '../lib/nav.js'
+
+  export default {
+    data: {
+      hebTitle: '',
+      civilTitle: '',
+      weekdays: ['ש', 'ו', 'ה', 'ד', 'ג', 'ב', 'א'],
+      rows: []
+    },
+    ym: null,
+    onShow() {
+      if (!this.ym) this.toToday()
+      else this.refresh()
+    },
+    toToday() {
+      const t = new Date()
+      this.ym = [t.getFullYear(), t.getMonth() + 1]
+      this.refresh()
+    },
+    refresh() {
+      const y = this.ym[0], m = this.ym[1], t = new Date()
+      const marked = {}
+      for (let d = 1; d <= 31; d++) {
+        if (ofDay(y, m, d).length) marked[d] = true
+      }
+      this.hebTitle = hebrewTitle(y, m)
+      this.civilTitle = MONTHS[m - 1] + ' ' + y
+      this.rows = monthGrid(y, m, [t.getFullYear(), t.getMonth() + 1, t.getDate()], marked)
+    },
+    shift(by) {
+      this.ym = shiftMonth(this.ym[0], this.ym[1], by)
+      this.refresh()
+    },
+    pick(n) {
+      nav.day = [this.ym[0], this.ym[1], n]
+      router.push({ uri: 'day' })
+    },
+    openReminders() {
+      router.push({ uri: 'reminders' })
+    }
+  }
+</script>
